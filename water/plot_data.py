@@ -16,8 +16,7 @@ print(max(time))
 pylab.plot( time, datalist[:,0] ,'*')
 pylab.xlabel("Time")
 pylab.ylabel("Temperature")
-pylab.ylim([273,298])
-
+pylab.ylim([280,286])
 pylab.savefig('temperature.png',bbox_inches='tight')
 
 
@@ -28,11 +27,16 @@ pylab.ylabel("Diameter")
 pylab.savefig('diameter.png',bbox_inches='tight')
 
 plt.close()
+pylab.plot( time, 1e6*datalist[:,1]**2 )
+pylab.xlabel("Time")
+pylab.ylabel("D^2 (Squared Diameter)")
+pylab.savefig('diameter_squared.png',bbox_inches='tight')
+
+plt.close()
 pylab.plot( time, -datalist[:,4] )
 pylab.xlabel("Time")
 pylab.ylabel("mdot")
 pylab.savefig('mdot.png',bbox_inches='tight')
-
 
 plt.close()
 pylab.plot( time, datalist[:,5], label="Term1" )

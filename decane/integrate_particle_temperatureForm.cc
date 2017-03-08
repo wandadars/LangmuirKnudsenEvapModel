@@ -71,7 +71,7 @@ struct NewParticle
   {
     ofstream ofs;
     ofs.open("data.txt", ios::out | ios::app);
-    ofs<< get_temperature()<< "\t"<<get_diameter()<<"\t"<<vel[0]<<"\t"<<pos[0]<<"\t"<<mdot<<"\t"<<Term1<<"\t"<<Term2<<"\t"<<Term1+Term2<<"\t"<<mass[0]<<endl;
+    ofs<<time<<"\t"<< get_temperature()<< "\t"<<get_diameter()<<"\t"<<vel[0]<<"\t"<<pos[0]<<"\t"<<mdot<<"\t"<<Term1<<"\t"<<Term2<<"\t"<<Term1+Term2<<"\t"<<mass[0]<<endl;
     ofs.close();
 
   }
@@ -135,7 +135,7 @@ int main(void)
   //Twb = 137*(T_B/373.15K)^(0.68)*log10(T_G) - 45K
   float T_g = 1000; //Temperature of gas (Kelvin)
   double P_g = 101325; //Pressure of gas (Pascals)
-  double Y_g = 0.00; //Mass Fraction of vapor in carrier gas
+  double Y_g = 0.0000; //Mass Fraction of vapor in carrier gas
   double mu_g = 2.410E-5; //Viscosity of gas (Pascals*seconds)
   double Sc_g = 2.7; //Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
   double R_g = 286.9; //Specific gas constant for carrir(air), J/kgK
@@ -148,7 +148,7 @@ int main(void)
   //Define droplet quantities
   double D_p = 2.0e-3; //initial droplet diameter(meters)
   double T_p = 315; //Kelvin
-  double r_p = 730; //kg/m^3 for water
+  double r_p = 730; //kg/m^3 
   double cp_p = 2218; //heat capacity of the liquid particle J/kgK
 
   //Defined droplet vapor properties
@@ -233,17 +233,17 @@ int main(void)
   // Langmuir-Knudsen I non-equilibrium vaporization model
 
 
-  inline double wilkeRuleProperty(double vapor_prop,double vapor_R, double gas_prop, double gas_R, double mol_fraction)
+  inline double wilkeRuleProperty(double vapor_prop,double vapor_R, double gas_prop, double gas_R, double mol_frac)
 {
     //#Evaluate the Wilke rule for computing thermophysical properties
     const double theta= vapor_R/gas_R;
 
-    omega_vg = (pow(pow(1.0+vapor_prop/gas_prop,1.0/2.0)*pow(theta,1.0/4.0),2.0))/(pow(8.0*(1.0+(1.0/theta)),1.0/2.0))
-    omega_gv = (pow(pow(1.0+gas_prop/vapor_prop,1.0/2.0)*pow(1.0/theta,1.0/4.0),2.0)/((8.0*pow(1.0+(theta),1.0/2.0))
+    double omega_vg = (pow(pow(1.0+vapor_prop/gas_prop,1.0/2.0)*pow(theta,1.0/4.0),2.0))/(pow(8.0*(1.0+(1.0/theta)),1.0/2.0));
+    double omega_gv = (pow(pow(1.0+gas_prop/vapor_prop,1.0/2.0)*pow(1.0/theta,1.0/4.0),2.0))/(pow(8.0*(1.0+(theta)),1.0/2.0));
 
-    mixture_prop= (ref_mol_frac*vapor_prop)/(ref_mol_frac + (1.0-ref_mol_frac)*omega_vg) + ((1.0-ref_mol_frac)*gas_prop)/(ref_mol_frac*omega_gv + (1.0-ref_mol_frac))
+    double mixture_prop= (mol_frac*vapor_prop)/(mol_frac + (1.0-mol_frac)*omega_vg) + ((1.0-mol_frac)*gas_prop)/(mol_frac*omega_gv + (1.0-mol_frac));
 
-    return mixture_prop
+    return mixture_prop;
 
 }
 

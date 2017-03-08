@@ -128,12 +128,12 @@ int main(void)
 
   //Numerics Section
   float dt = 1e-2; //timestep size(seconds)
-  int IMAX = 80000; //80000;  //Number of timesteps to take
+  int IMAX = 100000; //80000;  //Number of timesteps to take
 
   //Define background gas quantities
   float T_g = 298; //Temperature of gas (Kelvin)
   double P_g = 101325; //Pressure of gas (Pascals)
-  double Y_g = 0.00; //Mass Fraction of vapor in carrier gas
+  double Y_g = 0.0005; //Mass Fraction of vapor in carrier gas
   double mu_g = 1.8406383E-5; //Viscosity of gas (Pascals*seconds)
   double Sc_g = 0.66; //Schmidt number for water diffusing into air
   double R_g = 286.9; //Specific gas constant for carrir(air), J/kgK
@@ -144,10 +144,10 @@ int main(void)
   double fvolpp = 8e-3; //Volume of container that droplet is in m^3
 
   //Define droplet quantities
-  double D_p = 1.1e-3; //initial droplet diameter(meters)
+  double D_p = 1.05e-3; //initial droplet diameter(meters)
   double T_p = 282; //Kelvin
-  double r_p = 1000; //kg/m^3 for water
-  double cp_p = 4092; //heat capacity of the liquid particle J/kgK
+  double r_p = 958; //kg/m^3 for water
+  double cp_p = 4217; //heat capacity of the liquid particle J/kgK
 
   //Defined droplet vapor properties
   double R_v = 461.5; //gas constant for water vapor
@@ -207,7 +207,7 @@ int main(void)
                       r_g
                     );
 
-    if(droplet.get_diameter() < 1e-9)
+    if(droplet.get_diameter() < 1e-6)
     {
         break;
     }
@@ -370,7 +370,12 @@ int main(void)
     const double T_p = p.get_temperature() ;
 
     ///const double Psat = PsatF.get_Psat(T_p) ;
-    const double Psat = 1.2192e3; //hardcoded saturatoin pressure @ 283K 
+    double hvap = 2454e3; //Chris heat of vaporization of water at 292K J/kgK, moved from lower section because Psat needs it up here
+    const double T_B = 373; //Boiling point of water at 1atm in Kelvin
+    const double P_atm = 101325; //Atmosphereic pressure in pascals
+    const double Psat = P_atm*exp((hvap/R_v)*(1/T_B - 1/T_p));
+
+    //const double Psat = 1.2192e3; //hardcoded saturatoin pressure @ 283K 
     
     const float dv = fabs(fluid_v - p.vel[0]) ;
     const double Re = rho_g*D*dv/mu_g ;
@@ -428,7 +433,6 @@ int main(void)
     D = max(p.get_diameter(),1e-10) ;
 
     //cout <<"New computer Diameter: "<<D<<endl;
-    double hvap = 2477e3; //Chris heat of vaporization of water at 283K J/kgK
 
     bool find_hi = false ;
     double hlo = 0 ;
