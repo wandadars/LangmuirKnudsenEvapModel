@@ -111,8 +111,6 @@ double integrateMassEnergy(
               double , //Specific gas constant for vapor of droplet phase
               double )  ; //Schmidt number of carrier gas and droplet phase
 
-
-
 void integrateMomentum(
             NewParticle & ,
 		    float ,
@@ -128,7 +126,8 @@ int main(void)
 
   //Numerics Section
   float dt = 1e-2; //timestep size(seconds)
-  int IMAX = 100000; //80000;  //Number of timesteps to take
+idT: 333    New Droplet T: 282.837
+         nt IMAX = 100000; //80000;  //Number of timesteps to take
 
   //Define background gas quantities
   float T_g = 298; //Temperature of gas (Kelvin)
@@ -449,7 +448,8 @@ int main(void)
     const int ITMAX=100 ;
     int iter = 0 ;
       cout<<"f2: "<<f2<<"\tNu: "<<Nu<<"\tCp_g: "<<cp_g<<"\tPr: "<<Pr_g<<"\ttau_p: "<<tau_p<<"\tC_liquid: "<<p.get_c()<<"\tTerm1Coeff: "<<fudge*f2*Nu*cp_g/(3.*Pr_g*tau_p*p.get_c())<<"\tTerm2Coeff: "<< hvap*mdot/(max(p.mass[0],1e-30f)*p.get_c())<<"\tBeta: "<<beta_b<<"\tMass: "<<p.mass[0]<<"\tMdot: "<<p.mdot<<"\tXseq: "<<Psat/P_g<<endl;
-    for(iter=0;iter<ITMAX;++iter) {
+    for(iter=0;iter<ITMAX;++iter) 
+    {
 
       cout<<"T: "<<T1<<endl;
       

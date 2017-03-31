@@ -131,9 +131,9 @@ int main(void)
   int IMAX = 500000; //80000;  //Number of timesteps to take
 
   //Define background gas quantities
-  float T_g = 333; //Temperature of gas (Kelvin)
+  float T_g = 1700; //Temperature of gas (Kelvin)
   double P_g = 101325; //Pressure of gas (Pascals)
-  double Y_g = 0.01; //Mass Fraction of vapor in carrier gas
+  double Y_g = 0.009; //Mass Fraction of vapor in carrier gas
   double mu_g = 1.8406383E-5; //Viscosity of gas (Pascals*seconds)
   double Sc_g = 1.42; //Schmidt number for acetone into air(http://www.thermalfluidscentral.org/encyclopedia/index.php/Thermophysical_Properties:_Schmidt_number_for_vapors_in_dilute_mixture_in_air_at_normal_temperature,_enthalpy_of_vaporization,_and_boiling_point_at_1_atm)
   double R_g = 286.9; //Specific gas constant for carrir(air), J/kgK
@@ -145,7 +145,7 @@ int main(void)
 
   //Define droplet quantities(Estimated Wet Bulb Temperature of 272.3K)
   double D_p = 40e-6; //initial droplet diameter(meters)
-  double T_p = 305; //Kelvin
+  double T_p = 300; //Kelvin
   double r_p = 791; //kg/m^3 for water
   double cp_p = 2160; //heat capacity of the liquid particle J/kgK
 

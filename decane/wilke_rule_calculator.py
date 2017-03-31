@@ -3,11 +3,12 @@
 #Simple script to evaluate the Wilke rule for computing thermophysical properties
 
 vapor_prop= 0.0188613
-vapor_R=461.5 #J/kgK
+vapor_R=58.55 #J/kgK
 gas_prop=0.0261682
 gas_R=286.98
-ref_mol_frac=0.00638
-theta=1.6086;
+ref_mol_frac=0.0414
+
+theta=vapor_R/gas_R
 
 omega_vg = (((1+vapor_prop/gas_prop)**(1/2)*(theta)**(1/4))**2)/((8*(1+(1/theta)))**(1/2))
 omega_gv = (((1+gas_prop/vapor_prop)**(1/2)*(1/theta)**(1/4))**2)/((8*(1+(theta)))**(1/2))

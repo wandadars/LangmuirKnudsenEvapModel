@@ -4,3 +4,6 @@
 #Ignore the common output formats from running code
 data.txt
 out.txt
+
+#Ignore swap(.swp) files
+*.swp

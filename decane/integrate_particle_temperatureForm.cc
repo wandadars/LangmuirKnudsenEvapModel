@@ -80,6 +80,96 @@ struct NewParticle
 
 
 
+struct saturation_data
+{
+  double data_array* ;
+
+  void init(double dens, double cp, double T, double D)
+  {
+
+  }
+
+  void read_table(string file_name)
+  {
+      //open file
+      ifstream data_file;
+      data_file.open(file_name);
+      if (myfile.is_open())
+      {
+        while ( getline (myfile,line) )
+        {
+            cout << line << '\n';
+        }
+        myfile.close();
+      }
+      else cout << "Unable to open file"; 
+
+
+
+      //read lines into data_array
+  }
+};
+
+
+struct input_data
+{
+
+  //Numerics Section
+  float dt = 1e-3; //timestep size(seconds)
+  int IMAX = 10000; //Number of timesteps to take
+
+  //Define background gas quantities(Properties evaludated at the wet-bulb temperature of 420K
+  //Twb = 137*(T_B/373.15K)^(0.68)*log10(T_G) - 45K
+  float T_g = 1000; //Temperature of gas (Kelvin)
+  double P_g = 101325; //Pressure of gas (Pascals)
+  double Y_g = 0.0005; //Mass Fraction of vapor in carrier gas
+  double mu_g = 2.410E-5; //Viscosity of gas (Pascals*seconds)
+  double Sc_g = 2.7; //Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
+  double R_g = 286.9; //Specific gas constant for carrir(air), J/kgK
+  float u_g = 0.6; //background fluid velocity(m/s) 
+  double lambda_g = 0.043958; //carrier gas thermal conductivity
+  double cp_g = 1045; //heat capacity of gas J/kgK
+
+  double fvolpp = 8e-3; //Volume of container that droplet is in m^3
+
+  //Define droplet quantities
+  double D_p = 2.0e-3; //initial droplet diameter(meters)
+  double T_p = 315; //Kelvin
+  double r_p = 681; //kg/m^3 
+  double cp_p = 2413; //heat capacity of the liquid particle J/kgK
+
+  //Defined droplet vapor properties
+  double R_v = 58.55; //gas constant for vapor phase
+
+  //Compute the gas density
+  double r_g = P_g/(R_g*T_g);
+  cout<<"r_g: "<<r_g<<endl;
+
+  void init(double dens, double cp, double T, double D)
+  {
+
+  }
+
+  void read_table(string file_name)
+  {
+      //open file
+      ifstream data_file;
+      data_file.open(file_name);
+      if (myfile.is_open())
+      {
+        while ( getline (myfile,line) )
+        {
+            cout << line << '\n';
+        }
+        myfile.close();
+      }
+      else cout << "Unable to open file"; 
+  }
+
+};
+
+
+
 //Function prototypes
 double Langmuir_Knudsen_mdot(
 		   double , // Particle diameter
@@ -128,28 +218,28 @@ int main(void)
 {
 
   //Numerics Section
-  float dt = 1e-3; //timestep size(seconds)
+  float dt = input_data.dt; //timestep size(seconds)
   int IMAX = 10000; //Number of timesteps to take
 
   //Define background gas quantities(Properties evaludated at the wet-bulb temperature of 420K
   //Twb = 137*(T_B/373.15K)^(0.68)*log10(T_G) - 45K
   float T_g = 1000; //Temperature of gas (Kelvin)
   double P_g = 101325; //Pressure of gas (Pascals)
-  double Y_g = 0.0000; //Mass Fraction of vapor in carrier gas
+  double Y_g = 0.0005; //Mass Fraction of vapor in carrier gas
   double mu_g = 2.410E-5; //Viscosity of gas (Pascals*seconds)
   double Sc_g = 2.7; //Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
   double R_g = 286.9; //Specific gas constant for carrir(air), J/kgK
-  float u_g = 0.58; //background fluid velocity(m/s) 
-  double lambda_g = 0.03505; //carrier gas thermal conductivity
-  double cp_g = 1015; //heat capacity of gas J/kgK
+  float u_g = 0.6; //background fluid velocity(m/s) 
+  double lambda_g = 0.043958; //carrier gas thermal conductivity
+  double cp_g = 1045; //heat capacity of gas J/kgK
 
   double fvolpp = 8e-3; //Volume of container that droplet is in m^3
 
   //Define droplet quantities
   double D_p = 2.0e-3; //initial droplet diameter(meters)
   double T_p = 315; //Kelvin
-  double r_p = 730; //kg/m^3 
-  double cp_p = 2218; //heat capacity of the liquid particle J/kgK
+  double r_p = 681; //kg/m^3 
+  double cp_p = 2413; //heat capacity of the liquid particle J/kgK
 
   //Defined droplet vapor properties
   double R_v = 58.55; //gas constant for vapor phase
@@ -212,7 +302,7 @@ int main(void)
 
     */
     
-    if(droplet.get_diameter() < 1e-8)
+    if(droplet.get_diameter() < 1e-6)
     {
         break;
     }
@@ -228,9 +318,6 @@ int main(void)
   return 0;
 }
 
-
-
-  // Langmuir-Knudsen I non-equilibrium vaporization model
 
 
   inline double wilkeRuleProperty(double vapor_prop,double vapor_R, double gas_prop, double gas_R, double mol_frac)
@@ -269,6 +356,7 @@ int main(void)
     return Ysneq ;
   }
 
+  // Langmuir-Knudsen I non-equilibrium vaporization model
   double Langmuir_Knudsen_mdot(
 		   double D, // Particle diameter
 		   double T_p,   // particle temperature
@@ -322,7 +410,7 @@ int main(void)
         {
             cout<<"Mdot Calculation failed to converge"<<endl;
         }
-        if(fabs(Re_b-Re_b0)<1e-8)
+        if(fabs(Re_b-Re_b0)<1e-6)
         {
           break ;
         }
@@ -391,8 +479,8 @@ int main(void)
     const double T_p = p.get_temperature() ;
 
     ///const double Psat = PsatF.get_Psat(T_p) 
-    double hvap = 288.7e3; //Chris heat of vaporization of decane at 420K J/kgK, moved from lower section because Psat needs it up here
-    const double T_B = 447.7; //Boiling point of decane at 1atm in Kelvin
+    double hvap = 299.7e3; //Chris heat of vaporization of decane at 420K J/kgK, moved from lower section because Psat needs it up here
+    const double T_B = 447.27; //Boiling point of decane at 1atm in Kelvin
     const double P_atm = 101325; //Atmosphereic pressure in pascals
     const double Psat = P_atm*exp((hvap/R_v)*(1/T_B - 1/T_p));
     //const double Psat = 49.007e3; //hardcoded saturatoin pressure @ 420K 
@@ -468,7 +556,7 @@ int main(void)
     
     const int ITMAX=100 ;
     int iter = 0 ;
-      cout<<"f2: "<<f2<<"\tNu: "<<Nu<<"\tCp_g: "<<cp_g<<"\tPr: "<<Pr_g<<"\ttau_p: "<<tau_p<<"\tC_liquid: "<<p.get_c()<<"\tTerm1Coeff: "<<fudge*f2*Nu*cp_g/(3.*Pr_g*tau_p*p.get_c())<<"\tTerm2Coeff: "<< hvap*mdot/(max(p.mass[0],1e-30f)*p.get_c())<<"\tBeta: "<<beta_b<<"\tMass: "<<p.mass[0]<<"\tMdot: "<<p.mdot<<"\tXseq: "<<Psat/P_g<<endl;
+      cout<<"f2: "<<f2<<"\tNu: "<<Nu<<"\tCp_g: "<<cp_g<<"\tPr: "<<Pr_g<<"\ttau_p: "<<tau_p<<"\tC_liquid: "<<p.get_c()<<"\tTerm1Coeff: "<<fudge*f2*Nu*cp_g/(3.*Pr_g*tau_p*p.get_c())<<"\tTerm2Coeff: "<< hvap*mdot/(max(p.mass[0],1e-30f)*p.get_c())<<"\tBeta: "<<beta_b<<"\nMass: "<<p.mass[0]<<"\tMdot: "<<p.mdot<<"\tXseq: "<<Psat/P_g<<"\tPsat: "<<Psat<<endl;
     for(iter=0;iter<ITMAX;++iter) {
 
       cout<<"T: "<<T1<<endl;
