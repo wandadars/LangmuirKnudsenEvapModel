@@ -17,10 +17,10 @@ struct NewParticle
   double mdot ;
   double time ;
 
-
   //Debugging quantities
   double Term1;
   double Term2;
+
   void init(double dens, double cp, double T, double D)
   {
     vel[0] = vel[1] = vel[2] = 0 ;
@@ -35,7 +35,6 @@ struct NewParticle
     mdot=0.0 ;
     //using initial diameter, store initial mass of droplet
     mass[0] = mass[1] = density*(M_PI*pow(D,3)/6.0) ;
-
 
     //Debugging quantities
     double Term1=0;
@@ -211,6 +210,23 @@ class user_data
       R_v = 58.55; 
   }
 
+  void read_user_data()
+  {
+
+
+  }
+
+
+  string grab_user_variable(string line)
+  {
+
+      string variable, value;
+      char delimiter('=');
+      std::getline(std::cin,variable,delimiter);
+
+
+  }
+
 };
 
 
@@ -348,7 +364,7 @@ int main(void)
 
     */
     
-    if(droplet.get_diameter() < 1e-6)
+    if(droplet.get_diameter() < 1e-8)
     {
         break;
     }
