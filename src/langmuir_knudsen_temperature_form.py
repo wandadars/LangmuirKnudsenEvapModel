@@ -1,4 +1,5 @@
 import math
+import sys
 
 class Particle(object):
     def __init__(self, dens, cp, temp, diameter):
@@ -26,7 +27,7 @@ class Particle(object):
         return self.temp[0]
 
     def get_diameter(self):
-        self.diameter = max( (6.0*self.mass[0] / (math.pi*self.density) ) ** (1./3.), 1e-20)
+        self.diameter = max( (6.0*self.mass[0] / (math.pi*self.density) ) ** (1.0/3.0), 1e-20)
         return self.diameter
 
     def get_mass_fraction(self):
@@ -35,11 +36,9 @@ class Particle(object):
     def print_info(self):
         print('Temperature: {0:<8.4f}\tDiameter: {1:<8.4e}\tVelocity: {2:<8.4e}\tPosition(x): {3:<8.4e}\n'.format(self.temp[0], self.diameter, self.vel[0], self.pos[0]))
 
-    def write_info(self):
-        f = open('data.txt', 'w+') 
-        format_string = '{0:<8.4f}\t{1:<8.4f}\t{2:<8.4f}\t{3:<8.4f}\t{4:<8.4f}\t{5:<8.4e}\t{6:<8.4f}\t{7:<8.4f}\t{8:<8.4f}\t{9:<8.4e}\n'
-        f.write(format_string.format(self.time, self.temp[0], self.diameter, self.vel[0], self.pos[0], self.mdot, self.Term1, self.Term2, self.Term1 + self.Term2, self.mass[0]))
-        f.close()
+    def write_info(self, file_handle):
+        format_string = '{0:<8.4g}\t{1:<8.4f}\t{2:<8.4e}\t{3:<8.4f}\t{4:<8.4f}\t{5:<8.4e}\t{6:<8.4f}\t{7:<8.4f}\t{8:<8.4f}\t{9:<8.4e}\n'
+        file_handle.write(format_string.format(self.time, self.temp[0], self.get_diameter(), self.vel[0], self.pos[0], self.mdot, self.Term1, self.Term2, self.Term1 + self.Term2, self.mass[0]))
 
 
 class saturation_data(object):
@@ -73,93 +72,69 @@ class saturation_data(object):
 
 
 class UserData(object):
-    def __init__(self):
-        #Numerics Section
-        self.dt = 1.0e-3 #timestep size(seconds)
-        self.num_timesteps = 10000 #Number of timesteps to take
-
-        #Background gas quantities(Properties evaludated at the wet-bulb temperature of 420K
-        #Twb = 137*(T_B/373.15K)^(0.68)*math.log10(T_G) - 45K
-        self.T_g = 1000  #Temperature of gas (Kelvin)
-        self.P_g = 101325  #Pressure of gas (Pascals)
-        self.Y_g = 0.005  #Mass Fraction of vapor in carrier gas
-        self.mu_g = 2.410e-5  #Viscosity of gas (Pascals*seconds)
-        self.Sc_g = 2.7  #Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
-        self.R_g = 286.9  #Specific gas constant for carrir(air), J/kgK
-        self.u_g = 0.6  #Background fluid velocity(m/s) 
-        self.lambda_g = 0.043958  #Carrier gas thermal conductivity W/mK
-        self.cp_g = 1045  #Heat capacity of gas J/kgK
-
-        self.fvolpp = 8e-3 #Volume of container that droplet is in m^3
-
-        #Define droplet quantities
-        self.D_p = 2.0e-3 #Initial droplet diameter(meters)
-        self.T_p = 315  #Kelvin
-        self.r_p = 681  #kg/m^3 
-        self.cp_p = 2413  #Heat capacity of the liquid particle J/kgK
-
-        #Defined droplet vapor properties
-        self.R_v = 58.55  #gas constant for vapor phase
+    def __init__(self, file_name):
+        self.file_name = file_name
+        valid_user_data = ['dt', 'num_timesteps', 'T_g', 'P_g', 'Y_g', 'mu_g', 'Sc_g', 'R_g', 'u_g', 'lambda_g', 'cp_g', 'fvolpp', 'D_p', 'T_p', 'r_p', 'cp_p', 'R_v', 'h_vap', 'T_B']
+        self.user_data = dict.fromkeys(valid_user_data)
 
     def read_user_data(self):
-        pass
-
+        with open(self.file_name) as f:
+            content = f.readlines()
+        content = [x.strip() for x in content] 
+        for line in content:
+            if line and ('=' in line) and (not line.startswith('#')):
+                data = line.split('#', 1)[0] #When comments follow the specification
+                data = data.split('=')
+                data = [x.strip() for x in data]
+                self.user_data[data[0]] = float(data[1])
 
 def main():
-  input_data = UserData()
+  user_data_filename = sys.argv[1]
+  input_data = UserData(user_data_filename)
+  input_data.read_user_data()
 
   #Numerics Section
-  dt = input_data.dt #timestep size(seconds)
-  num_timesteps = input_data.num_timesteps #Number of timesteps to take
+  dt = input_data.user_data['dt']  #timestep size(seconds)
+  num_timesteps = int(input_data.user_data['num_timesteps']) #Number of timesteps to take
 
-  #Define background gas quantities(Properties evaludated at the wet-bulb temperature of 420K
-  #Twb = 137*(T_B/373.15K)^(0.68)*math.log10(T_G) - 45K
-  T_g = input_data.T_g #Temperature of gas (Kelvin)
-  P_g = input_data.P_g #Pressure of gas (Pascals)
-  Y_g = input_data.Y_g #Mass Fraction of vapor in carrier gas
-  mu_g = input_data.mu_g #Viscosity of gas (Pascals*seconds)
-  Sc_g = input_data.Sc_g #Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
-  R_g = input_data.R_g #Specific gas constant for carrir(air), J/kgK
-  u_g = input_data.u_g #background fluid velocity(m/s) 
-  lambda_g = input_data.lambda_g #carrier gas thermal conductivity
-  cp_g = input_data.cp_g #heat capacity of gas J/kgK
-
-  fvolpp = input_data.fvolpp #Volume of container that droplet is in m^3
-
+  T_g = input_data.user_data['T_g'] #Temperature of gas (Kelvin)
+  R_g = input_data.user_data['R_g'] #Density of gas (kg/m3)
+  P_g = input_data.user_data['P_g'] #Pressure of gas (Pascals)
+  Y_g = input_data.user_data['Y_g'] #Mass Fraction of vapor in carrier gas
+  
   #Define droplet quantities
-  D_p = input_data.D_p #initial droplet diameter(meters)
-  T_p = input_data.T_p #Kelvin
-  r_p = input_data.r_p #kg/m^3 
-  cp_p = input_data.cp_p #heat capacity of the liquid particle J/kgK
-
-  #Defined droplet vapor properties
-  R_v = input_data.R_v #gas constant for vapor phase
+  D_p = input_data.user_data['D_p'] #initial droplet diameter(meters)
+  T_p = input_data.user_data['T_p'] #Kelvin
+  r_p = input_data.user_data['r_p'] #kg/m^3 
+  cp_p = input_data.user_data['cp_p'] #heat capacity of the liquid particle J/kgK
 
   #Compute the gas density
-  r_g = P_g/(R_g*T_g)
+  r_g = P_g / (R_g * T_g)
   print('Gas density: {0:<10.6f}'.format(r_g))
 
   #Initialize a particle
-  droplet = Particle(r_p,cp_p,T_p,D_p) 
+  droplet = Particle(r_p, cp_p, T_p, D_p) 
 
-  mdot=0.0
-  m_air = r_g*fvolpp
-  m_water = Y_g*m_air / (1 - Y_g)  #initial mass of water
+  mdot = 0.0
+  m_gas = r_g * input_data.user_data['fvolpp']
+  m_vapor = Y_g * m_gas / (1 - Y_g)  #initial mass of water
 
   time = 0.0
+  output_file_handle = open('data.txt', 'w') 
+  output_file_handle.write('#time\ttemperature(K)\tDiameter(m)\tVelocity\tPosition\t\tmdot\tTerm1\t\tTerm2\tTerm1+Term2\t\tMass(kg)\n')
   for i in range(num_timesteps):
     print('Timestep: {0:<5d}'.format(i+1))
     droplet.print_info()
-    mdot = integrateMassEnergy(droplet, dt, fvolpp, T_g, u_g, r_g, mu_g, cp_g, lambda_g, P_g, R_g, Y_g, R_v, Sc_g)
-
+    integrateMassEnergy(droplet, input_data, Y_g)
+    print(mdot)
     droplet.time = time
     time = time + dt
 
     #Update Y_g to account for droplet evaporation into the background space
-    dm = -mdot*dt
-    print('Mdot: {0:<8.4e}\tAdded Water Mass: {1:<8.4e}'.format(mdot, dm))
+    dm = -droplet.mdot*dt
+    print('Mdot: {0:<8.4e}\tAdded Gas Mass: {1:<8.4e}'.format(droplet.mdot, dm))
     #m_water= m_water + dm
-    Y_g = m_water / (m_water + m_air)
+    Y_g = m_vapor / (m_vapor + m_gas)
     print('New Y_g = {0:<8.4f}'.format(Y_g))
 
     droplet.print_info()
@@ -175,15 +150,17 @@ def main():
     """
     
     if droplet.get_diameter() < 1e-8:
+        print('Droplet Diameter is: ' + str(droplet.get_diameter()) +' which is less than threshold. Droplet has completely evaporated')
         break
 
-    droplet.write_info()
-    
+    droplet.write_info(output_file_handle)
+  
+  output_file_handle.close()   
   print('Program Finished')
 
 
 
-def  wilke_rule_property(vapor_prop, vapor_R, gas_prop, gas_R, mol_frac):
+def wilke_rule_property(vapor_prop, vapor_R, gas_prop, gas_R, mol_frac):
     #Evaluate the Wilke rule for computing thermophysical properties
     theta = vapor_R / gas_R
 
@@ -208,11 +185,11 @@ def estimate_re_b(y_min, y_max, Y_inf, Sh, Sc_g):
     return Re_b
 
   #Knudsen layer thickness
-def computeLK( T_p, R_v, mu_g, sc_g, p_g):
+def computeLK(T_p, R_v, mu_g, sc_g, p_g):
     alpha_e = 1.0 
     return mu_g * math.sqrt(2.0 *math.pi * T_p * R_v) / (alpha_e * sc_g * p_g) 
 
-def computeYsneq( Xseq, Lk, D, theta2, Pr_g, Re_b):   
+def computeYsneq(Xseq, Lk, D, theta2, Pr_g, Re_b):   
     """
     Xseq    // equilibrium mole fraction
     Lk      // Knudsen Layer thickness
@@ -289,7 +266,46 @@ def Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g
       return mdot 
 
 
-def integrateMassEnergy( p, dt, fvolpp, fluid_T, fluid_v, rho_g, mu_g, cp_g, lambda_g, P_g, R_g, Yinf, R_v,  Sc_g):  
+def compute_saturation_pressure(T_p, input_data):
+    hvap = input_data.user_data['h_vap']  
+    T_B = input_data.user_data['T_B']  
+    R_v = input_data.user_data['R_v']
+    P_atm = 101325  #Reference Unit: Atmosphereic pressure in pascals
+    Psat = P_atm * math.exp((hvap / R_v) * (1.0 / T_B - 1.0 / T_p))  #Clausius Clapyron
+    
+    #Antoine equation (output pressure is bar, so conversion to Pascals is done)
+    #a = 4.07857
+    #b = 1501.268
+    #c = -78.67
+    #Psat = math.pow(10, a - b/(c+T_p)) * 100000  # 1 bar = 100,000 Pa
+    return Psat
+
+def integrate_mass(p, input_data):
+
+    #Time advance coefficients for 2nd order implicit BDF
+    beta = 2.0/3.0 
+    alpha1 = -4.0/3.0
+    alpha2 = 1.0/3.0
+
+    #time advance coefficients for 1st order implicit BDF
+    # beta = 1.0 
+    # alpha1 = -1.0 
+    # alpha2 = 0  
+
+    dtbeta = input_data.user_data['dt'] * beta
+    
+    massp1 = dtbeta *p.mdot - alpha1 * p.mass[0] - alpha2 * p.mass[1]
+    if massp1 < 0.0:
+        massp1 = 0.0
+    elif massp1 < 0.01 * p.mass[0]:
+        massp1 = 0 
+
+    #Update mass of droplet
+    p.mass[1] = p.mass[0]
+    p.mass[0] = massp1
+
+
+def integrateMassEnergy(p, input_data,Yinf):  
     """
     p  #Particle
     dt  #Timestep
@@ -307,92 +323,98 @@ def integrateMassEnergy( p, dt, fvolpp, fluid_T, fluid_v, rho_g, mu_g, cp_g, lam
     Sc_g)  #Schmidt number of carrier gas and droplet phase
     """
 
-    #Time advance coefficients for 2nd order implicit BDF
-    beta = 2.0/3.0 
-    alpha1 = -4.0/3.0 
-    alpha2 = 1.0/3.0 
-    dtbeta = dt * beta 
-
-    #time advance coefficients for 1st order implicit BDF
-    # beta = 1.0 
-    # alpha1 = -1.0 
-    # alpha2 = 0  
-
-    dtbeta = dt * beta 
-
-    D = p.get_diameter() 
     T_p = p.get_temperature() 
+    Psat = compute_saturation_pressure(T_p, input_data)    
 
-    # Psat = PsatF.get_Psat(T_p) 
-    hvap = 299.7e3  #Chris heat of vaporization of decane at 420K J/kgK, moved from lower section because Psat needs it up here
-    T_B = 447.27  #Boiling point of decane at 1atm in Kelvin
-    P_atm = 101325  #Atmosphereic pressure in pascals
-    Psat = P_atm * math.exp((hvap / R_v) * (1.0 / T_B - 1.0 / T_p))  #Clausius Clapyron
-    # Psat = 49.007e3 #hardcoded saturation pressure @ 420K 
-    
-    dv = abs(fluid_v - p.vel[0]) 
-    Re = rho_g * D * dv / mu_g 
+    mu_g = input_data.user_data['mu_g']
+    cp_g = input_data.user_data['cp_g']
+    lambda_g = input_data.user_data['lambda_g']
+    P_g = input_data.user_data['P_g']
+    R_g = input_data.user_data['R_g']
+    Sc_g = input_data.user_data['Sc_g']
+    R_v = input_data.user_data['R_v']
+    rho_g = P_g / (R_g * input_data.user_data['T_g'])
 
+    dv = abs(input_data.user_data['u_g'] - p.vel[0]) 
+    D = p.get_diameter() 
+    Re = rho_g * D * dv / mu_g
     mdot = Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g, R_v, Yinf) 
 
     #Hardcoded mdots for debugging
     #mdot = -1.1879e-6*math.sqrt(-1.5125e-9*p.time + 1.21e-6)  #Analytical mdot from miller's paper
     #mdot = -8.71137e-10
     
-    #store mdot for output
-    p.mdot = mdot
-
     #Hardcoded value for mdot for isolating energy equation from mass loss equation
     #mdot = -1.3e-9  #kg/s
 
     print('Computed mdot: {0:<8.4e}'.format(mdot))
     #//if(T_p < PsatF.get_Ttrip()) // Check if colder than triple point
-    if T_p < 273.16: #Chris Hardcoded triple point for water Check if colder than triple point
+    if T_p < input_data.user_data['T_trip']:  
       mdot = max(mdot, 0.0)  # only allow condensation
 
+    p.mdot = mdot #Store conditioned mdot
+    integrate_mass(p, input_data)
+
+    if p.mass[0] > 0:
+        integrate_energy(p, input_data)
+
+
+def integrate_energy(p, input_data):  
+    
+    #2nd order implicit BDF
+    beta = 2.0/3.0 
+    alpha1 = -4.0/3.0 
+    alpha2 = 1.0/3.0 
+
+    #1st order implicit BDF coefficients
+    # beta = 1.0 
+    # alpha1 = -1.0 
+    # alpha2 = 0  
+    
+    dtbeta = input_data.user_data['dt'] * beta 
+
+    D = p.get_diameter()
+    T_p = p.get_temperature()
+
+    Psat = compute_saturation_pressure(T_p, input_data)
+
+    dv = abs(input_data.user_data['u_g'] - p.vel[0])
+    mu_g = input_data.user_data['mu_g']
+    P_g = input_data.user_data['P_g']
+    rho_g = P_g / (input_data.user_data['R_g'] * input_data.user_data['T_g'])
+
+    dv = abs(input_data.user_data['u_g'] - p.vel[0])
+    D = p.get_diameter()
+    Re = rho_g * D * dv / mu_g
+
+    mdot = p.mdot 
+    lambda_g = input_data.user_data['lambda_g']
+    cp_g = input_data.user_data['cp_g']
     # Compute blowing Reynolds Number
-    Re_b = max(-mdot / (D * mu_g * math.pi), 0.0) 
-    Pr_g = mu_g * cp_g / lambda_g 
-    Nu = 2.0 + 0.552 * math.sqrt(Re) * Pr_g ** (1.0/3.0) 
-    beta_b = 0.5 * Pr_g * Re_b 
+    Re_b = max(-mdot / (D * mu_g * math.pi), 0.0)
+    Pr_g = mu_g * cp_g / lambda_g
+    Nu = 2.0 + 0.552 * math.sqrt(Re) * Pr_g ** (1.0/3.0)
+    beta_b = 0.5 * Pr_g * Re_b
     #Compute modification to heat transfer due to blowing
     if beta_b > 1.0e-6:
-        f2 = beta_b / (math.exp(beta_b) - 1.0)
+        #Overflow can happen if beta_b is very large due to very small particle diameter
+        try:
+            f2 = beta_b / (math.exp(beta_b) - 1.0) 
+        except OverflowError:
+            f2 = 0
     else:
         f2 = 1.0
 
-    mf = p.get_mass_fraction() 
-    rho_p = p.get_density() 
-
-    T1 = p.temp[0] 
-    massp1 = dtbeta *mdot - alpha1 * p.mass[0] - alpha2 * p.mass[1] 
-
-    if massp1 < 0.0:
-        massp1 = 0.0
-    elif massp1 < 0.01 * p.mass[0]:
-      massp1 = 0 
+    hvap = input_data.user_data['h_vap']
+    fixedsrc = alpha1 * p.temp[0] + alpha2 * p.temp[1] - dtbeta * hvap * mdot / (max(p.mass[0], 1.0e-30) * p.get_c() )
     
-    #Update mass of droplet
-    p.mass[1] = p.mass[0] 
-    p.mass[0] = massp1 
-    #Update droplet diameter
-    D = max(p.get_diameter(), 1e-10) 
-
-    #double hvap = 288.7e3 //Chris heat of vaporization of decane at 420K J/kgK
-
-    find_hi = False 
-    hlo = 0 
-    hhi = 1e100 
-    #heatratio = p.mass[0]/max(mfluid*cp_g,1e-30) 
-    oldfunc = 1e300 
-    fudge2 = 1.0;
-    fixedsrc = alpha1 * p.temp[0] + alpha2 * p.temp[1] - dtbeta * hvap * mdot / (max(p.mass[0], 1.0e-30) * p.get_c() * fudge2)
+    rho_p = p.get_density() 
     tau_p = rho_p * D * D / (18.0 * mu_g) 
     print('rho_p: {0:<8.4f}\tD: {1:<8.4e}\tmu_g: {2:<8.4e}'.format(rho_p, D, mu_g) )
-    fudge = 1.0 
-    Ecoef = dtbeta * fudge * f2 * Nu * cp_g /(3.0 * Pr_g * tau_p * p.get_c()) 
+
+    Ecoef = dtbeta * f2 * Nu * cp_g /(3.0 * Pr_g * tau_p * p.get_c()) 
     
-    term_1 = fudge * f2 * Nu * cp_g / (3.0 * Pr_g * tau_p * p.get_c())
+    term_1 = f2 * Nu * cp_g / (3.0 * Pr_g * tau_p * p.get_c())
     term_2 = hvap * mdot / (max(p.mass[0], 1.0e-30) * p.get_c())
     format_string = 'f2: {0:<8.4f}   Nu: {1:<8.4f}   Cp_g: {2:<8.4f}   Pr: {3:<8.4f}   tau_p: {4:<8.4f}   ' \
                     'C_liquid: {5:<8.4f}   Term1Coeff: {6:<8.4e}   Term2Coeff: {7:<8.4e}   Beta: {8:<8.4f}\n' \
@@ -401,24 +423,20 @@ def integrateMassEnergy( p, dt, fvolpp, fluid_T, fluid_v, rho_g, mu_g, cp_g, lam
     print(format_string.format(f2, Nu, cp_g, Pr_g, tau_p, p.get_c(), term_1, term_2, beta_b, p.mass[0], p.mdot, Psat/P_g, Psat))
 
 
-    max_iterations = 100 
+    T1 = p.temp[0] 
+    max_iterations = 100
+    find_hi = False
+    hlo = 0
+    hhi = 1e100 
+    oldfunc = 1e300
     for i in range(max_iterations):
       print('T: {0:<10.4f}'.format(T1)) 
-      
       # Update fluid temperature to consider convection heat transfer
       # Temperature of fluid must range between fluid and particle initial
       # temperatures to be physical
-
-      #double ptemp = energyp.get_temp(h1,mf) ;
       ptemp = T1
-      #print('ptemp: ', ptemp, '\th1: ', h1)
-      #      maxtemp = max(ptemp,double(fluid_T)) 
-      #      mintemp = min(ptemp,double(fluid_T)) 
-      #      fluid_T_corr = min(maxtemp, max(mintemp, fluid_T - (h1 - p.h[0]) * heatratio)) 
 
-      func = T1 + fixedsrc - Ecoef * (fluid_T - ptemp)  
-      #print('func: ', func) 
-
+      func = T1 + fixedsrc - Ecoef * (input_data.user_data['T_g'] - ptemp)  
       if i > 2 and ( abs(func) < 1e-6 * max(p.temp[0], T1) or hhi - hlo < 1e-5):
         break 
       if func < 0: 
@@ -448,17 +466,16 @@ def integrateMassEnergy( p, dt, fvolpp, fluid_T, fluid_v, rho_g, mu_g, cp_g, lam
 
       oldfunc = func 
 
-
-    if i > max_iterations -1: 
-      print('particle temperature update failed to converge!')
+      if i == max_iterations -1: 
+        print('particle temperature update failed to converge!')
     
  
-    print('FluidT: {0:<8.4f}\tNew Droplet T: {1:<8.4f}'.format(fluid_T, T1))
+    print('FluidT: {0:<8.4f}\tNew Droplet T: {1:<8.4f}'.format(input_data.user_data['T_g'], T1))
     print('f2: {0:<8.4f}\tNu: {1:<8.4f}\tCp_g: {2:<8.4f}\tPr: {3:<8.4f}\ttau_p: {4:<8.4e}\tC_liquid: {5:<8.4f}\tD: {6:<8.4e}'.format(f2, Nu, cp_g, Pr_g, tau_p, p.get_c(), p.get_diameter())) 
     
     #These are the two terms in the energy equation
-    debug_term_1 = (fudge * f2 * Nu * cp_g / (3.0 * Pr_g * tau_p * p.get_c())) * (fluid_T - T1)
-    debug_term_2 = hvap * mdot / (p.mass[0] * p.get_c() * fudge2)
+    debug_term_1 = (f2 * Nu * cp_g / (3.0 * Pr_g * tau_p * p.get_c())) * (input_data.user_data['T_g'] - T1)
+    debug_term_2 = hvap * mdot / (p.mass[0] * p.get_c() )
     print('Term 1: {0:<10.6e}\tTerm 2: {1:<10.6e}'.format(debug_term_1, debug_term_2))
 
     #Store debugging quantities
@@ -470,35 +487,32 @@ def integrateMassEnergy( p, dt, fvolpp, fluid_T, fluid_v, rho_g, mu_g, cp_g, lam
     p.temp[0] = T1    # Now T = T^n+1
 
     T_pn = p.get_temperature() 
-    #nPsat = PsatF.get_Psat(T_pn) 
-    nPsat = P_atm * math.exp((hvap / R_v) *(1.0 / T_B - 1.0 / T_pn))
-
-    if nPsat > P_g:   # boiling limit temperature to boiling point
+    nPsat = compute_saturation_pressure(T_pn, input_data) 
+    print('Psat: {0:<8.4f}'.format(nPsat))
+    if nPsat > input_data.user_data['P_g']:   # boiling limit temperature to boiling point
       print('Boiling temperature limiter active') 
       
       # Find boiling temperature at this pressure
-      Tmax = T_pn 
-      # Tmin = PsatF.get_Ttrip() 
-      Tmin = 273.16 #Chris hardcoded triple point temperature of water 
+      Tmax = input_data.user_data['T_crit']
+      Tmin = input_data.user_data['T_trip'] 
       Tboil = 0.9 * Tmax + 0.1 * Tmin 
-      max_iterations = 50 
+      max_iterations = 100
       for i in range(max_iterations):
-        # f = PsatF.get_Psat(Tboil, dPdT) - P_g 
-        f = P_atm * math.exp((hvap / R_v) * (1.0 / T_B - 1.0 / Tboil)) - P_g  #Chris hardcoded saturation pressure at boiling temperature
-        if abs(f) < 1e-4 * P_g:
+        f = lambda T, input_data: compute_saturation_pressure(T, input_data)-input_data.user_data['P_g']
+        Tboil = Tmin - f(Tmin, input_data)*(Tmax-Tmin)/(f(Tmax, input_data)-f(Tmin, input_data))
+        print(abs(f(Tboil, input_data)))
+        if abs(f(Tboil, input_data)) < 1e-4 * input_data.user_data['P_g']:
+          print('Boiling root finder converged.')
           break 
-        if f > 0.0:
+        if f(Tmin, input_data)*f(Tboil, input_data) < 0.0:
           Tmax = Tboil 
-        if f < 0.0: 
+        if f(Tmax, input_data)*f(Tboil, input_data) < 0.0: 
           Tmin = Tboil 
-        
-        Tboil -= f / dPdT 
-        if Tboil > Tmax or Tboil < Tmin:
-          Tboil = 0.5 * (Tmax + Tmin) 
+          
+        if i == max_iterations - 1:
+            print('Boiling root finder failed to converge.')
       
-      # print('boiling temperature switch activated, Tboil =', Tboil)
-      mf = p.get_mass_fraction() 
-      # hnew = energyp.get_h(Tboil,mf) 
+      print('boiling temperature switch activated, Tboil =', Tboil)
       #reset temperature to boiling temperature
       p.temp[0] = Tboil 
 
@@ -506,22 +520,20 @@ def integrateMassEnergy( p, dt, fvolpp, fluid_T, fluid_v, rho_g, mu_g, cp_g, lam
 
 
 
-
-
 def integrateMomentum(p, dt, fluid_v, fvolpp, mu_g, rfluid):
     """
-    NewParticle &p,
-    float dt,
-    double fluid_v, //carrier gas velocity
-    double fvolpp, // Volume allocated to the droplet
-    double mu_g, //carrier gas viscosity
-    double rfluid //carrier gas density
+    p  #Particle object
+    dt  #timestep
+    fluid_v  #carrier gas velocity
+    fvolpp  # Volume allocated to the droplet
+    mu_g  #carrier gas viscosity
+    rfluid  #carrier gas density
     """
 
     #integration constants
-    beta = 2./3. 
-    alpha1 = -4./3. 
-    alpha2 = 1./3. 
+    beta = 2.0/3.0 
+    alpha1 = -4.0/3.0 
+    alpha2 = 1.0/3.0 
     dtbeta = dt * beta 
 
     vel1 = p.vel[0] 

@@ -1,0 +1,32 @@
+#Acetone Droplet Data 
+#Numerics Section
+dt = 1.0e-6 #timestep size(seconds)
+num_timesteps = 500000 #Number of timesteps to take
+
+#Background gas quantities
+#Twb = 137*(T_B/373.15K)^(0.68)*math.log10(T_G) - 45K
+T_g = 1700  #Temperature of gas (Kelvin)
+P_g = 101325  #Pressure of gas (Pascals)
+Y_g = 0.009  #Mass Fraction of vapor in carrier gas
+u_g = 0.0  #Background fluid velocity(m/s) 
+Sc_g = 1.42  #Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
+R_g = 286.9  #Specific gas constant for carrir(air), J/kgK
+
+
+#Temperature dependent background gas properties(evaluated at gas temperature 1700K)
+mu_g = 1.8406383e-5  #Viscosity of gas (Pascals*seconds)
+lambda_g = 0.025652 #Carrier gas thermal conductivity W/mK
+cp_g = 1006.1  #Heat capacity of gas J/kgK
+
+fvolpp = 8e-3 #Volume of container that droplet is in m^3
+
+#Droplet quantities
+D_p = 40.0e-6 #Initial droplet diameter(meters)
+T_p = 300  #Kelvin
+r_p = 791  #kg/m^3 
+cp_p = 2160  #Heat capacity of the liquid particle J/kgK
+h_vap = 538e3  #heat of vaporization of liqiud  J/kgK
+T_B = 329.3  #Boiling point of liquid at 1atm in Kelvin
+T_trip = 178.5 # triple point temperature of decane 
+R_v = 150.0  #gas constant for vapor phase
+T_crit = 508.0 #Critical temperature of liquid in Kelvin

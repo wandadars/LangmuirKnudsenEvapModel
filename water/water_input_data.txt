@@ -1,0 +1,40 @@
+#Water Droplet Data for Miller's 1998 paper
+#Numerics Section
+dt = 1.0e-2 #timestep size(seconds)
+num_timesteps = 80000 #Number of timesteps to take
+
+#Background gas quantities
+#Twb = 137*(T_B/373.15K)^(0.68)*math.log10(T_G) - 45K
+T_g = 298  #Temperature of gas (Kelvin)
+P_g = 101325  #Pressure of gas (Pascals)
+Y_g = 0.01  #Mass Fraction of vapor in carrier gas
+u_g = 0.0  #Background fluid velocity(m/s)
+Sc_g = 0.66  #Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
+R_g = 286.9  #Specific gas constant for carrir(air), J/kgK
+
+
+#Temperature dependent background gas properties(evaluated at the wet-bulb temperature of 293.97K)
+#mu_g = 1.8273e-5  #Viscosity of gas (Pascals*seconds)
+#lambda_g = 0.025746  #Carrier gas thermal conductivity W/mK
+#cp_g = 1006.9  #Heat capacity of gas J/kgK
+
+#Temperature dependent background gas properties(evaluated at gas temperature 298K)
+mu_g = 1.8406383E-5  #Viscosity of gas (Pascals*seconds)
+lambda_g = 0.025652  #Carrier gas thermal conductivity W/mK
+cp_g = 1006.1  #Heat capacity of gas J/kgK
+
+fvolpp = 8e-3 #Volume of container that droplet is in m^3
+
+#Droplet quantities
+D_p = 1.05e-3 #Initial droplet diameter(meters)
+T_p = 282  #Kelvin
+r_p = 958  #kg/m^3 
+cp_p = 4217  #Heat capacity of the liquid particle J/kgK
+h_vap =  2480e3  #heat of vaporization of water at 282K (J/kg)
+T_crit = 647.14 #Critical temperature of water in Kelvin
+T_B = 373.15  #Boiling point of water at 1atm in Kelvin
+T_trip = 273.16 # triple point temperature of water 
+R_v = 461.5  #gas constant for water vapor phase
+
+
+
