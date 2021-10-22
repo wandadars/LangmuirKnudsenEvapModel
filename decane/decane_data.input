@@ -5,7 +5,7 @@ num_timesteps = 500 #Number of timesteps to take
 
 #Background gas quantities
 #Twb = 137*(T_B/373.15K)^(0.68)*math.log10(T_G) - 45K
-T_g = 3000  #Temperature of gas (Kelvin)
+T_g = 1000  #Temperature of gas (Kelvin)
 P_g = 101325  #Pressure of gas (Pascals)
 Y_g = 0.005  #Mass Fraction of vapor in carrier gas
 u_g = 0.6  #Background fluid velocity(m/s) 
@@ -14,14 +14,14 @@ R_g = 286.9  #Specific gas constant for carrir(air), J/kgK
 
 
 #Temperature dependent background gas properties(evaluated at the wet-bulb temperature of 420K)
-#mu_g = 2.410e-5  #Viscosity of gas (Pascals*seconds)
-#lambda_g = 0.043958  #Carrier gas thermal conductivity W/mK
-#cp_g = 1045  #Heat capacity of gas J/kgK
+mu_g = 2.410e-5  #Viscosity of gas (Pascals*seconds)
+lambda_g = 0.043958  #Carrier gas thermal conductivity W/mK
+cp_g = 1045  #Heat capacity of gas J/kgK
 
 #Temperature dependent background gas properties(evaluated at gas temperature 1000K)
-mu_g = 4.3417e-5  #Viscosity of gas (Pascals*seconds)
-lambda_g = 0.067824 #Carrier gas thermal conductivity W/mK
-cp_g = 1141.8  #Heat capacity of gas J/kgK
+#mu_g = 4.3417e-5  #Viscosity of gas (Pascals*seconds)
+#lambda_g = 0.067824 #Carrier gas thermal conductivity W/mK
+#cp_g = 1141.8  #Heat capacity of gas J/kgK
 
 fvolpp = 8e-3 #Volume of container that droplet is in m^3
 

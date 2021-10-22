@@ -5,8 +5,7 @@
 /output
 
 #Ignore the common output formats from running code
-data.txt
-out.txt
+*.dat
 *.log
 
 #Ignore swap(.swp) files

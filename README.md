@@ -4,3 +4,5 @@ This is just a test-bed for evaluating the Langmuir-Knudsen I evaporation model 
 
 The python code is located in the /src directory. The scripts should be run using Python3.
 
+Run using:
+python3 /src/langmuir\_knudsen\_temperature\_form.py decane\_input\_data.txt > run.log

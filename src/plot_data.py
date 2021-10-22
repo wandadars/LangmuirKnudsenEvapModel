@@ -2,10 +2,13 @@ import matplotlib.pyplot as plt
 import os
 import numpy as np
 import pylab
+import sys
 
 pylab.rcParams['agg.path.chunksize'] =  500000
 
-datalist = pylab.loadtxt('data.txt', comments='#')
+input_file = sys.argv[1]
+
+datalist = pylab.loadtxt(input_file, comments='#')
 N=len(datalist)
 print('Number of timestep data: ' + str(N))
 

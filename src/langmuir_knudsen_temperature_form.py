@@ -120,7 +120,7 @@ def main():
   m_vapor = Y_g * m_gas / (1 - Y_g)  #initial mass of water
 
   time = 0.0
-  output_file_handle = open('data.txt', 'w') 
+  output_file_handle = open('data.dat', 'w') 
   output_file_handle.write('#time\ttemperature(K)\tDiameter(m)\tVelocity\tPosition\t\tmdot\tTerm1\t\tTerm2\tTerm1+Term2\t\tMass(kg)\n')
   for i in range(num_timesteps):
     print('Timestep: {0:<5d}'.format(i+1))
