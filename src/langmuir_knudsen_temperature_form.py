@@ -272,12 +272,6 @@ def compute_saturation_pressure(T_p, input_data):
     R_v = input_data.user_data['R_v']
     P_atm = 101325  #Reference Unit: Atmosphereic pressure in pascals
     Psat = P_atm * math.exp((hvap / R_v) * (1.0 / T_B - 1.0 / T_p))  #Clausius Clapyron
-    
-    #Antoine equation (output pressure is bar, so conversion to Pascals is done)
-    #a = 4.07857
-    #b = 1501.268
-    #c = -78.67
-    #Psat = math.pow(10, a - b/(c+T_p)) * 100000  # 1 bar = 100,000 Pa
     return Psat
 
 def integrate_mass(p, input_data):
