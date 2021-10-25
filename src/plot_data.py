@@ -28,7 +28,7 @@ output_filename = os.path.join(output_path, plot_file_name)
 pylab.plot( time, temperature, '*')
 pylab.xlabel("Time")
 pylab.ylabel("Temperature")
-pylab.ylim([min(temperature), max(temperature)])
+pylab.ylim([0.95*min(temperature), 1.05*max(temperature)])
 pylab.savefig(output_filename, bbox_inches='tight')
 plt.close()
 
@@ -51,7 +51,7 @@ plt.close()
 
 plot_file_name = 'mdot.png'
 output_filename = os.path.join(output_path, plot_file_name)
-pylab.plot( time, -datalist[:,5] )
+pylab.semilogy(time, -datalist[:,5] )
 pylab.xlabel("Time")
 pylab.ylabel("mdot")
 pylab.savefig(output_filename, bbox_inches='tight')

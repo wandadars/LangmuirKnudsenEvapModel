@@ -265,6 +265,16 @@ def Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g
       mdot = -Re_b * D * mu_g * math.pi 
       return mdot 
 
+def boiling_evaporation_mdot(D, T_boil, T_g, Re, hvap, cp_g, lambda_g):
+    """
+    D       # Particle diameter
+    T_boil  # Boiling temperature
+    Re      # Reynolds Number
+    cp_g    #gas constant pressure heat capacity
+    lambda_g  #gas thermal conductivity
+    """
+    mdot = -2*math.pi * (lambda_g / cp_g) * D * (1 + 0.23*math.sqrt(Re))*math.log(1 + (cp_g*(T_g - T_boil))/hvap)
+    return mdot
 
 def compute_saturation_pressure(T_p, input_data):
     hvap = input_data.user_data['h_vap']  
@@ -299,22 +309,22 @@ def integrate_mass(p, input_data):
     p.mass[0] = massp1
 
 
-def integrateMassEnergy(p, input_data,Yinf):  
+def integrateMassEnergy(p, input_data, Yinf):  
     """
-    p  #Particle
-    dt  #Timestep
-    fvolpp  #Volume around particle
-    fluid_T  #Carrier fluid temperature
-    fluid_v  #carrier fluid velocity
-    rho_g  #carrier density
-    mu_g  #carrier viscosity
-    cp_g  #heat capacity of carrier gas
-    lambda_g  #thermal conductivity of carrier gas
-    P_g  #pressure of gas phase
-    R_g  #specific gas constant of carrier phase
-    Yinf  #Mass fraction of droplet vapor in carrier gas
-    R_v  #Specific gas constant for vapor of droplet phase
-    Sc_g)  #Schmidt number of carrier gas and droplet phase
+    p           #Particle
+    dt          #Timestep
+    fvolpp      #Volume around particle
+    fluid_T     #Carrier fluid temperature
+    fluid_v     #carrier fluid velocity
+    rho_g       #carrier density
+    mu_g        #carrier viscosity
+    cp_g        #heat capacity of carrier gas
+    lambda_g    #Thermal conductivity of carrier gas
+    P_g         #pressure of gas phase
+    R_g         #specific gas constant of carrier phase
+    Yinf        #Mass fraction of droplet vapor in carrier gas
+    R_v         #Specific gas constant for vapor of droplet phase
+    Sc_g        #Schmidt number of carrier gas and droplet phase
     """
 
     T_p = p.get_temperature() 
@@ -332,7 +342,20 @@ def integrateMassEnergy(p, input_data,Yinf):
     dv = abs(input_data.user_data['u_g'] - p.vel[0]) 
     D = p.get_diameter() 
     Re = rho_g * D * dv / mu_g
-    mdot = Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g, R_v, Yinf) 
+    
+    if input_data.user_data['hybridBoil'] == 1:
+        print('Hybrid Boiling Activated')
+        hvap = input_data.user_data['h_vap']
+        T_g = input_data.user_data['T_g']
+        T_boil = compute_boiling_temperature(input_data)
+        if T_p >=0.995*T_boil:
+            print('Droplet State: Boiling')
+            mdot = boiling_evaporation_mdot(D, T_boil, T_g, Re, hvap, cp_g, lambda_g) 
+        else:
+            print('Droplet State: Not Boiling')
+            mdot = Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g, R_v, Yinf) 
+    else:
+        mdot = Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g, R_v, Yinf) 
 
     #Hardcoded mdots for debugging
     #mdot = -1.1879e-6*math.sqrt(-1.5125e-9*p.time + 1.21e-6)  #Analytical mdot from miller's paper
@@ -424,7 +447,7 @@ def integrate_energy(p, input_data):
     hhi = 1e100 
     oldfunc = 1e300
     for i in range(max_iterations):
-      print('T: {0:<10.4f}'.format(T1)) 
+      print('Temperature Convergence: T: {0:<10.4f}'.format(T1)) 
       # Update fluid temperature to consider convection heat transfer
       # Temperature of fluid must range between fluid and particle initial
       # temperatures to be physical
@@ -441,7 +464,6 @@ def integrate_energy(p, input_data):
         find_hi = True 
     
       T1 += -func
-
 
       factor = 0.5
       #Relax update to help convergence
@@ -476,7 +498,6 @@ def integrate_energy(p, input_data):
     p.Term1 = debug_term_1
     p.Term2 = debug_term_2
 
-  
     p.temp[1] = p.temp[0]  # Update T^n-1
     p.temp[0] = T1    # Now T = T^n+1
 
@@ -484,35 +505,31 @@ def integrate_energy(p, input_data):
     nPsat = compute_saturation_pressure(T_pn, input_data) 
     print('Psat: {0:<8.4f}'.format(nPsat))
     if nPsat > input_data.user_data['P_g']:   # boiling limit temperature to boiling point
-      print('Boiling temperature limiter active') 
-      
-      # Find boiling temperature at this pressure
-      Tmax = input_data.user_data['T_crit']
-      Tmin = input_data.user_data['T_trip'] 
-      Tboil = 0.9 * Tmax + 0.1 * Tmin 
-      max_iterations = 100
-      for i in range(max_iterations):
-        f = lambda T, input_data: compute_saturation_pressure(T, input_data)-input_data.user_data['P_g']
-        Tboil = Tmin - f(Tmin, input_data)*(Tmax-Tmin)/(f(Tmax, input_data)-f(Tmin, input_data))
-        print(abs(f(Tboil, input_data)))
-        if abs(f(Tboil, input_data)) < 1e-4 * input_data.user_data['P_g']:
-          print('Boiling root finder converged.')
-          break 
-        if f(Tmin, input_data)*f(Tboil, input_data) < 0.0:
-          Tmax = Tboil 
-        if f(Tmax, input_data)*f(Tboil, input_data) < 0.0: 
-          Tmin = Tboil 
-          
-        if i == max_iterations - 1:
-            print('Boiling root finder failed to converge.')
-      
-      print('boiling temperature switch activated, Tboil =', Tboil)
-      #reset temperature to boiling temperature
-      p.temp[0] = Tboil 
-
+        print('Boiling temperature limiter active') 
+        Tboil = compute_boiling_temperature(input_data)
+        p.temp[0] = Tboil 
     return mdot
 
-
+def compute_boiling_temperature(input_data):
+    # Find boiling temperature at this pressure
+    Tmax = input_data.user_data['T_crit']
+    Tmin = input_data.user_data['T_trip'] 
+    Tboil = 0.9 * Tmax + 0.1 * Tmin 
+    max_iterations = 100
+    for i in range(max_iterations):
+      f = lambda T, input_data: compute_saturation_pressure(T, input_data)-input_data.user_data['P_g']
+      Tboil = Tmin - f(Tmin, input_data)*(Tmax-Tmin)/(f(Tmax, input_data)-f(Tmin, input_data))
+      if abs(f(Tboil, input_data)) < 1e-4 * input_data.user_data['P_g']:
+        print('Boiling root finder converged.')
+        break 
+      if f(Tmin, input_data)*f(Tboil, input_data) < 0.0:
+        Tmax = Tboil 
+      if f(Tmax, input_data)*f(Tboil, input_data) < 0.0: 
+        Tmin = Tboil 
+      if i == max_iterations - 1:
+          print('Boiling root finder failed to converge.')
+    print('boiling temperature switch activated, Tboil = ' + str(Tboil))
+    return Tboil
 
 def integrateMomentum(p, dt, fluid_v, fvolpp, mu_g, rfluid):
     """
