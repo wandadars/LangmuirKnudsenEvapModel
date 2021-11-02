@@ -276,6 +276,27 @@ def boiling_evaporation_mdot(D, T_boil, T_g, Re, hvap, cp_g, lambda_g):
     mdot = -2*math.pi * (lambda_g / cp_g) * D * (1 + 0.23*math.sqrt(Re))*math.log(1 + (cp_g*(T_g - T_boil))/hvap)
     return mdot
 
+def compute_boiling_temperature(input_data):
+    # Find boiling temperature at this pressure
+    Tmax = input_data.user_data['T_crit']
+    Tmin = input_data.user_data['T_trip']
+    Tboil = 0.9 * Tmax + 0.1 * Tmin
+    max_iterations = 100
+    f = lambda T, input_data: compute_saturation_pressure(T, input_data)-input_data.user_data['P_g']
+    for i in range(max_iterations):
+      Tboil = Tmin - f(Tmin, input_data)*(Tmax-Tmin)/(f(Tmax, input_data)-f(Tmin, input_data))
+      if abs(f(Tboil, input_data)) < 1e-4 * input_data.user_data['P_g']:
+        print('Boiling root finder converged.')
+        break
+      if f(Tmin, input_data)*f(Tboil, input_data) < 0.0:
+        Tmax = Tboil
+      if f(Tmax, input_data)*f(Tboil, input_data) < 0.0:
+        Tmin = Tboil
+      if i == max_iterations - 1:
+          print('Boiling root finder failed to converge.')
+    print('boiling temperature switch activated, Tboil = ' + str(Tboil))
+    return Tboil
+
 def compute_saturation_pressure(T_p, input_data):
     hvap = input_data.user_data['h_vap']  
     T_B = input_data.user_data['T_B']  
@@ -510,26 +531,6 @@ def integrate_energy(p, input_data):
         p.temp[0] = Tboil 
     return mdot
 
-def compute_boiling_temperature(input_data):
-    # Find boiling temperature at this pressure
-    Tmax = input_data.user_data['T_crit']
-    Tmin = input_data.user_data['T_trip'] 
-    Tboil = 0.9 * Tmax + 0.1 * Tmin 
-    max_iterations = 100
-    for i in range(max_iterations):
-      f = lambda T, input_data: compute_saturation_pressure(T, input_data)-input_data.user_data['P_g']
-      Tboil = Tmin - f(Tmin, input_data)*(Tmax-Tmin)/(f(Tmax, input_data)-f(Tmin, input_data))
-      if abs(f(Tboil, input_data)) < 1e-4 * input_data.user_data['P_g']:
-        print('Boiling root finder converged.')
-        break 
-      if f(Tmin, input_data)*f(Tboil, input_data) < 0.0:
-        Tmax = Tboil 
-      if f(Tmax, input_data)*f(Tboil, input_data) < 0.0: 
-        Tmin = Tboil 
-      if i == max_iterations - 1:
-          print('Boiling root finder failed to converge.')
-    print('boiling temperature switch activated, Tboil = ' + str(Tboil))
-    return Tboil
 
 def integrateMomentum(p, dt, fluid_v, fvolpp, mu_g, rfluid):
     """
