@@ -1,0 +1,15 @@
+To use Antoine parameters, replace the function in the src code with this one:
+
+def compute_saturation_pressure(T_p, input_data):
+    #Source 1 on Antoine Parameters
+    #a = 8.96787
+    #b = 1115.19
+    #c = -81.502
+    
+    #Source 2 of Antoine parameters
+    a = 10.245
+    b = 1904.164
+    c = 2.1228
+    p_sat = 10**(a - b / (c + T_p))
+    return p_sat
+

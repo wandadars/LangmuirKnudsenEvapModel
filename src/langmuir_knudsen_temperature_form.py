@@ -34,7 +34,7 @@ class Particle(object):
         return 1.0
 
     def print_info(self):
-        print('Temperature: {0:<8.4f}\tDiameter: {1:<8.4e}\tVelocity: {2:<8.4e}\tPosition(x): {3:<8.4e}\n'.format(self.temp[0], self.diameter, self.vel[0], self.pos[0]))
+        print('Temperature: {0:<8.4f}\tDiameter: {1:<8.4e}\tVelocity: {2:<8.4e}\tPosition(x): {3:<8.4e}\tMass: {4:<8.4e}\n'.format(self.temp[0], self.diameter, self.vel[0], self.pos[0], self.mass[0]))
 
     def write_info(self, file_handle):
         format_string = '{0:<8.4g}\t{1:<8.4f}\t{2:<8.4e}\t{3:<8.4f}\t{4:<8.4f}\t{5:<8.4e}\t{6:<8.4f}\t{7:<8.4f}\t{8:<8.4f}\t{9:<8.4e}\n'
@@ -281,11 +281,11 @@ def compute_boiling_temperature(input_data):
     Tmax = input_data.user_data['T_crit']
     Tmin = input_data.user_data['T_trip']
     Tboil = 0.9 * Tmax + 0.1 * Tmin
-    max_iterations = 100
+    max_iterations = 200
     f = lambda T, input_data: compute_saturation_pressure(T, input_data)-input_data.user_data['P_g']
     for i in range(max_iterations):
       Tboil = Tmin - f(Tmin, input_data)*(Tmax-Tmin)/(f(Tmax, input_data)-f(Tmin, input_data))
-      if abs(f(Tboil, input_data)) < 1e-4 * input_data.user_data['P_g']:
+      if abs(f(Tboil, input_data)) < 5e-4 * input_data.user_data['P_g']:
         print('Boiling root finder converged.')
         break
       if f(Tmin, input_data)*f(Tboil, input_data) < 0.0:
@@ -294,6 +294,7 @@ def compute_boiling_temperature(input_data):
         Tmin = Tboil
       if i == max_iterations - 1:
           print('Boiling root finder failed to converge.')
+      #print(f(Tboil,input_data))
     print('boiling temperature switch activated, Tboil = ' + str(Tboil))
     return Tboil
 
@@ -306,7 +307,6 @@ def compute_saturation_pressure(T_p, input_data):
     return Psat
 
 def integrate_mass(p, input_data):
-
     #Time advance coefficients for 2nd order implicit BDF
     beta = 2.0/3.0 
     alpha1 = -4.0/3.0
@@ -318,9 +318,9 @@ def integrate_mass(p, input_data):
     # alpha2 = 0  
 
     dtbeta = input_data.user_data['dt'] * beta
-    
-    massp1 = dtbeta *p.mdot - alpha1 * p.mass[0] - alpha2 * p.mass[1]
+    massp1 = dtbeta * p.mdot - alpha1 * p.mass[0] - alpha2 * p.mass[1]
     if massp1 < 0.0:
+        print('Negative Droplet Mass when attempting to remove ' + str((dtbeta/beta)*p.mdot) + ' kg from droplet. Negative mass is ' + str(massp1) + ', Setting mass to zero')
         massp1 = 0.0
     elif massp1 < 0.01 * p.mass[0]:
         massp1 = 0 
@@ -462,7 +462,7 @@ def integrate_energy(p, input_data):
 
 
     T1 = p.temp[0] 
-    max_iterations = 100
+    max_iterations = 200
     find_hi = False
     hlo = 0
     hhi = 1e100 
