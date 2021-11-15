@@ -1,7 +1,7 @@
 #Decane Droplet Data for Miller's 1998 paper
 #Numerics Section
 dt = 1.0e-2 #timestep size(seconds)
-num_timesteps = 500 #Number of timesteps to take
+num_timesteps = 350 #Number of timesteps to take
 
 #Background gas quantities
 #Twb = 137*(T_B/373.15K)^(0.68)*math.log10(T_G) - 45K

@@ -234,7 +234,7 @@ def Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g
       Lk = computeLK(T_p,R_v,mu_g,Sc_g,P_g) 
       Re_b0 = estimate_re_b(yMin, yMax, Yinf, Sh, Sc_g)
       
-      max_solver_iterations = 40
+      max_solver_iterations = 100
       for i in range(max_solver_iterations): 
         Ysneq = computeYsneq(Xseq,Lk,D,theta2,Pr_g,Re_b) 
         #Bound Ysneq so that it lies between Yseq and Yinf
@@ -245,7 +245,7 @@ def Langmuir_Knudsen_mdot(D, T_p, Psat, Re, mu_g, cp_g, lambda_g, P_g, R_g, Sc_g
         Re_b = Hm * Sh / Sc_g 
         factor = min(0.8, 0.5 * D / Lk)  #Damping factor
 
-        if i >= 39:
+        if i >= max_solver_iterations:
             print('Mdot Calculation failed to converge')
 
         if abs(Re_b - Re_b0) < 1.0e-6:

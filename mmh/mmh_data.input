@@ -1,15 +1,16 @@
 #Decane Droplet Data for Miller's 1998 paper
 #Numerics Section
-dt = 1.0e-7 #timestep size(seconds)
-num_timesteps = 500 #Number of timesteps to take
+dt = 1.0e-6 #timestep size(seconds)
+num_timesteps = 10000 #Number of timesteps to take
 
 hybridBoil = 0 
 
 #Background gas quantities
 #Twb = 137*(T_B/373.15K)^(0.68)*math.log10(T_G) - 45K
-T_g = 600  #Temperature of gas (Kelvin)
+#T_g = 600  #Temperature of gas (Kelvin)
+T_g = 300  #Temperature of gas (Kelvin)
 P_g = 101325  #Pressure of gas (Pascals)
-Y_g = 0.000  #Mass Fraction of vapor in carrier gas
+Y_g = 0.05  #Mass Fraction of vapor in carrier gas
 u_g = 0.0  #Background fluid velocity(m/s) 
 Sc_g = 1.07  #Schmidt number for gas diffusing into air http://webserver.dmt.upm.es/~isidoro/dat1/Mass%20diffusivity%20data.pdf
 R_g = 286.9  #Specific gas constant for carrir(air), J/kgK
@@ -28,8 +29,8 @@ cp_g = 520.57  #Heat capacity of gas J/kgK
 fvolpp = 8e-3 #Volume of container that droplet is in m^3
 
 #Droplet quantities
-D_p = 1.0e-6 #Initial droplet diameter(meters)
-T_p = 320  #Kelvin
+D_p = 4.0e-6 #Initial droplet diameter(meters)
+T_p = 300  #Kelvin
 r_p = 880  #kg/m^3 
 cp_p = 2930  #Heat capacity of the liquid particle J/kgK
 h_vap = 879064.5  #heat of vaporization of liquid J/kgK
